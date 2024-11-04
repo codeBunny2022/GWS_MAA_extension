@@ -1,9 +1,7 @@
-# GWS_MAA_extension
-
-web extension for GWS MAA application
+# GWS_MAA_EXTENSION
 
 ```bash
-gwsmaa_chrome_extension/
+GWS_MAA_EXTENSION/
 │
 ├── manifest.json
 ├── background.js
@@ -20,37 +18,104 @@ gwsmaa_chrome_extension/
 ```
 
 
+Flask Server Directory Structure
 
-1. Google Cloud Console Setup: Configure OAuth credentials and approve necessary scopes for the Google Workspace APIs you intend to use.
-2. User Authorization: Ensure users authenticate using their Google accounts via the Chrome extension popup. Store and manage tokens securely.
-3. Server-Side Processing: Use the OAuth tokens to make authenticated requests to Google’s APIs to perform tasks. Ensure proper error handling and logging to identify and handle issues effectively.
-
-How It Will Work
-
-
-1. The User opens the Chrome extension and submits a task.
-2. The Chrome Extension initializes OAuth flow, gets the user token, and sends it along with task details to the Flask server.
-3. The Flask Server receives the task and token, builds a prompt, interacts with the Claude API to get steps for the task.
-4. The Flask Server then uses Google Workspace APIs with the OAuth token to execute the task.
-5. Results are sent back to the Chrome extension and displayed to the user.
-
-This approach ensures that API keys and tokens are managed securely on the server-side, and users of the Chrome extension have a seamless and secure experience interacting with Google Workspace services.
+```bash
+flask_server/
+│
+├── GOOGLE_APP.py
+└── .env
+```
 
 
 
 
-1. Handle OAuth Tokens: The Flask server receives the OAuth token and uses it to authenticate requests to Google Workspace services.
-2. Interact with Claude API: It constructs a prompt and sends it to Claude using the API, then processes the response to determine necessary actions.
-3. Google Workspace Integration: Using OAuth tokens, it can perform various tasks such as sending emails, creating documents, adding calendar events, and more.
 
-Summary
+1. Install Flask and other dependencies:
+
+```bash
+ pip install Flask Flask-Cors python-dotenv anthropic google-auth google-auth-oauthlib google-auth-httplib2
+```
 
 
-1. Chrome Extension:
-   * Handles OAuth authentication.
-   * Sends task details to Flask server.
-2. Flask Server:
-   * Processes tasks, interacts with Claude API.
-   * Uses OAuth token to authenticate and perform actions using Google Workspace APIs.
 
-By combining the Chrome extension for user interaction and authentication with the Flask server for task processing and API interactions, all functionalities outlined in the GOOGLE_APP.py are achieved securely and efficiently.
+2\. Create .env File:
+
+
+```bash
+ CLAUDE_API_KEY=claude_api_key
+```
+
+
+
+
+3\. Flask App (GOOGLE_APP.py):
+Ensure you place the code above in GOOGLE_APP.py inside the flask_server directory.
+
+
+
+4\. Run the Flask Server:
+Navigate to the flask_server directory and run:
+
+
+```javascript
+ python GOOGLE_APP.py
+```
+
+
+
+## Setup Chrome Extension
+
+
+
+1. Create Extension Files:
+   Ensure all the provided extension files (like manifest.json, background.js, popup.html, popup.js, content.js, utils.js, oauth.js, styles.css, and icons) are inside the GWS_MAA_EXTENSION directory.
+2. Replace Placeholder Values:
+   * In manifest.json, replace "GOOGLE_CLIENT_ID" with your actual Google Client ID obtained from the Google Cloud Console.
+   * In popup.js, replace "FLASK_SERVER_URL" with the URL of your Flask server, e.g., <http://127.0.0.1:5000/>.
+3. Load the Extension in Chrome:
+   * Open Chrome and go to chrome://extensions/.
+   * Enable "Developer mode" using the toggle switch in the upper right.
+   * Click "Load unpacked" and select the GWS_MAA_EXTENSION directory.
+4. Test the Extension:
+   * Click on the Chrome extension icon and enter a task in the popup.
+   * The extension will authenticate using Google OAuth and then send the task details to the Flask server for processing.
+   * Results will be displayed in the extension popup.
+
+
+Detailed Steps for Google OAuth Setup
+
+Google Cloud Console Configuration:
+
+
+
+1. Create a Project:
+   * Go to the �.
+   * Create a new project or select an existing project.
+2. Enable APIs:
+   * Go to "API & Services" > "Library".
+   * Enable the necessary Google APIs (e.g., Gmail API, Google Drive API, Google Calendar API).
+3. OAuth Consent Screen:
+   * Go to "API & Services" > "OAuth consent screen".
+   * Configure the consent screen by filling out the necessary fields.
+4. Create OAuth Credentials:
+   * Go to "API & Services" > "Credentials".
+   * Create credentials > OAuth 2.0 Client IDs.
+   * Configure the OAuth client:
+     * Application type: Chrome App
+     * Authorized JavaScript origins: Your domain or <http://localhost> for testing.
+     * Authorized redirect URIs: https://<your_app_id>.chromiumapp.org/ (you will fill in <your_app_id> later after you get your Extension ID).
+5. Get Client ID and Client Secret:
+   * Once you create the OAuth credentials, you will get a Client ID and Client Secret. Use the Client ID in manifest.json.
+
+
+Final Checklist
+
+* Flask Server: Ensure the Flask server is running and accessible.
+
+
+* Extension Loaded: Ensure the extension is loaded in Chrome.
+  * Go to chrome://extensions/ and ensure the extension is listed and enabled.
+* OAuth Configuration: Ensure OAuth is correctly configured in the Google Cloud Console and manifest.json.
+
+
