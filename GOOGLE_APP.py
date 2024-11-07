@@ -12,6 +12,8 @@ import google.auth.transport.requests
 from google.oauth2.credentials import Credentials
 from google.oauth2 import id_token
 from google.auth.transport import requests
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from dotenv import load_dotenv
 
 # Initialize logging
@@ -59,6 +61,11 @@ You are GWMAA, a multi-action agent developed by "Google Workspace Team at Persi
 11. add_task(task_title, task_description)
 12. complete_task(task_id)
 13. search_files(query)
+14. create_spreadsheet(spreadsheet_name)
+15. update_spreadsheet(spreadsheet_id, range_name, values)
+16. read_spreadsheet(spreadsheet_id, range_name)
+17. create_slide(presentation_name)
+18. update_slide(presentation_id, slide_content)
 
 - All argument values are mandatory.
 
@@ -94,6 +101,18 @@ Provide a Python dictionary with two keys:
     {
     "thought": "I am opening Google Drive to create a new document with the specified content.",
     "actions": ["open_drive()", "create_document('New Document', 'This is the content of the new document.')"]
+    }
+
+3.
+    {
+    "thought": "I am creating a new Google Spreadsheet.",
+    "actions": ["create_spreadsheet('New Spreadsheet')"]
+    }
+
+4.
+    {
+    "thought": "I am creating a new Google Slide.",
+    "actions": ["create_slide('New Presentation')"]
     }
 
 ---
@@ -140,7 +159,12 @@ function_match_dict = {
     "share_document": 10,
     "add_task": 11,
     "complete_task": 12,
-    "search_files": 13
+    "search_files": 13,
+    "create_spreadsheet": 14,
+    "update_spreadsheet": 15,
+    "read_spreadsheet": 16,
+    "create_slide": 17,
+    "update_slide": 18
 }
 
 def build_prompt(task: str, already_done: str, workspace_content: str, prompt_history: str, current_service_url: str, service_history: str) -> str:
@@ -166,8 +190,8 @@ def extract_list_from_string(text: str):
 
 def get_dict(your_string: str):
     your_string = your_string.replace("```", "'")
-    your_string = your_string.replace("null", "None")
-    your_string is your_string.replace("false", "False")
+    your_string = your_string replace("null", "None")
+    your_string = your_string.replace("false", "False")
     your_string = your_string.replace("true", "True")
     pattern = r'\{(?:[^{}]|(?!\}).)*\}'
     matches = re.findall(pattern, your_string)
@@ -251,7 +275,104 @@ def get_answer(task, already_done, workspace_content, prompt_history, current_se
         response_data.append(temp)
     return response_data, [{"thought": response_dict.get("thought"), "actions": [clean_arguments(function) for function in list_of_functions]}], response_dict.get("thought")
 
-@app.route("/", methods=["GET", "POST"])
+def create_spreadsheet(credentials, spreadsheet_name):
+    try:
+        service = build('sheets', 'v4', credentials=credentials)
+        spreadsheet = {
+            'properties': {
+                'title': spreadsheet_name
+            }
+        }
+        spreadsheet = service.spreadsheets().create(body=spreadsheet, fields='spreadsheetId').execute()
+        return {'spreadsheetId': spreadsheet.get('spreadsheetId')}
+    except HttpError as err:
+        logging.error("An error occurred: %s", err)
+        raise
+
+def update_spreadsheet(credentials, spreadsheet_id, range_name, values):
+    try:
+        service = build('sheets', 'v4', credentials=credentials)
+        body = {
+            'values': values
+        }
+        result = service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id, range=range_name,
+            valueInputOption='RAW', body=body).execute()
+        return result
+    except HttpError as err:
+        logging.error("An error occurred: %s", err)
+        raise
+
+def read_spreadsheet(credentials, spreadsheet_id, range_name):
+    try:
+        service = build('sheets', 'v4', credentials=credentials)
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id, range=range_name).execute()
+        rows = result.get('values', [])
+        return rows
+    except HttpError as err:
+        logging.error("An error occurred: %s", err)
+        raise
+
+def create_slide(credentials, presentation_name):
+    try:
+        service = build('slides', 'v1', credentials=credentials)
+        presentation = {
+            'title': presentation_name
+        }
+        presentation = service.presentations().create(body=presentation).execute()
+        return {'presentationId': presentation.get('presentationId')}
+    except HttpError as err:
+        logging.error("An error occurred: %s", err)
+        raise
+
+def update_slide(credentials, presentation_id, slide_content):
+    try:
+        service = build('slides', 'v1', credentials=credentials)
+        requests = [{
+            'createSlide': {
+                'objectId': 'MySlide_01',
+                'slideLayoutReference': {
+                    'predefinedLayout': 'TITLE_AND_BODY'
+                },
+                'placeholderIdMappings': [{
+                    'layoutPlaceholder': {
+                        'type': 'TITLE',
+                        'index': 0
+                    },
+                    'objectId': 'Title_01'
+                }, {
+                    'layoutPlaceholder': {
+                        'type': 'BODY',
+                        'index': 0
+                    },
+                    'objectId': 'Body_01'
+                }]
+            }
+        }, {
+            'insertText': {
+                'objectId': 'Title_01',
+                'insertionIndex': 0,
+                'text': slide_content['title']
+            }
+        }, {
+            'insertText': {
+                'objectId': 'Body_01',
+                'insertionIndex': 0,
+                'text': slide_content['body']
+            }
+        }]
+        body = {
+            'requests': requests
+        }
+        response = service.presentations().batchUpdate(
+            presentationId=presentation_id, body=body).execute()
+        return response
+    except HttpError as err:
+        logging.error("An error occurred: %s", err)
+        raise
+
+@app.route("/", methods=["POST"])
 def get_response():
     logging.info("Request received.")
     if request.method == "POST":
@@ -270,14 +391,31 @@ def get_response():
             token = data["token"]
             
             credentials = Credentials(token)
-            # Perform actions here using credentials and Google APIs
-
-            logging.info("Received POST data: %s", data)
-            response, already_completed_new, thought = get_answer(
+            actions, already_done_new, thought = get_answer(
                 task, already_done, workspace_content, prompt_history, current_service_url, service_history
             )
+            
+            for action in actions:
+                if action["function_number"] == 14:
+                    # create_spreadsheet
+                    result = create_spreadsheet(credentials, action["arguments"][0])
+                elif action["function_number"] == 15:
+                    # update_spreadsheet
+                    result = update_spreadsheet(credentials, action["arguments"][0], action["arguments"][1], action["arguments"][2])
+                elif action["function_number"] == 16:
+                    # read_spreadsheet
+                    result = read_spreadsheet(credentials, action["arguments"][0], action["arguments"][1])
+                elif action["function_number"] == 17:
+                    # create_slide
+                    result = create_slide(credentials, action["arguments"][0])
+                elif action["function_number"] == 18:
+                    # update_slide
+                    result = update_slide(credentials, action["arguments"][0], action["arguments"][1])
+                else:
+                    continue
+            
             result = {
-                "data": response,
+                "data": result,
                 "already_done": already_completed_new,
                 "thought": thought
             }
@@ -286,6 +424,7 @@ def get_response():
         except Exception as e:
             logging.error("Error processing request: %s", e)
             return jsonify({"error": str(e)}), 500
+
     return "please make a post request."
 
 if __name__ == "__main__":

@@ -15,6 +15,11 @@ GWS_MAA_EXTENSION/
     ├── icon16.png
     ├── icon48.png
     └── icon128.png
+
+flask_server/
+│
+├── GOOGLE_APP.py
+└── .env
 ```
 
 
@@ -112,8 +117,6 @@ Google Cloud Console Configuration:
 Final Checklist
 
 * Flask Server: Ensure the Flask server is running and accessible.
-
-
 * Extension Loaded: Ensure the extension is loaded in Chrome.
   * Go to chrome://extensions/ and ensure the extension is listed and enabled.
 * OAuth Configuration: Ensure OAuth is correctly configured in the Google Cloud Console and manifest.json.
