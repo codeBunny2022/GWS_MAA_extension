@@ -122,3 +122,206 @@ Final Checklist
 * OAuth Configuration: Ensure OAuth is correctly configured in the Google Cloud Console and manifest.json.
 
 
+
+## commit on 
+
+
+
+1. Google Sheets Integration:
+   * Create Spreadsheet: Create a new Google Spreadsheet.
+   * Update Spreadsheet: Update values in a specified range within a Google Spreadsheet.
+   * Read Spreadsheet: Read values from a specified range in a Google Spreadsheet.
+2. Google Slides Integration:
+   * Create Slide: Create a new Google Slides presentation.
+   * Update Slide: Insert slides and update content within a Google Slides presentation.
+3. Existing Google Workspace Functions:
+   * Gmail: Open Gmail, send emails, and read emails.
+   * Google Drive: Open Drive, create documents, read documents, and share documents.
+   * Google Calendar: Open Calendar, create events, and list events.
+   * Google Tasks: Add tasks and complete tasks.
+   * File Search: Search for files within Google Drive.
+
+
+
+Example Use Cases
+
+#### 1. Send an Email via Gmail
+
+* Thought: "I am opening Gmail to send an email to the recipient."
+* Actions:
+
+
+```bash
+{
+  "thought": "I am opening Gmail to send an email to the recipient.",
+  "actions": ["open_gmail()", "send_email('example@example.com', 'Subject', 'Email body')"]
+}
+```
+
+
+
+#### 2. Create a Google Document
+
+* Thought: "I am opening Google Drive to create a new document with the specified content."
+* Actions:
+
+
+```bash
+{
+  "thought": "I am opening Google Drive to create a new document with the specified content.",
+  "actions": ["open_drive()", "create_document('New Document', 'This is the content of the new document.')"]
+}
+```
+
+
+
+#### 3. Create a Google Spreadsheet
+
+* Thought: "I am creating a new Google Spreadsheet."
+* Actions:
+
+
+```bash
+{
+  "thought": "I am creating a new Google Spreadsheet.",
+  "actions": ["create_spreadsheet('New Spreadsheet')"]
+}
+```
+
+
+
+#### 4. Update a Google Spreadsheet
+
+* Thought: "I am updating values in the specified range of the spreadsheet."
+* Actions:
+
+
+```bash
+{
+  "thought": "I am updating values in the specified range of the spreadsheet.",
+  "actions": ["update_spreadsheet('spreadsheet_id', 'Sheet1!A1:C10', [['value1', 'value2'], ['value3', 'value4']])"]
+}
+```
+
+
+
+#### 5. Read Values from a Google Spreadsheet
+
+* Thought: "I am reading values from the specified range of the spreadsheet."
+* Actions:
+
+
+```bash
+{
+  "thought": "I am reading values from the specified range of the spreadsheet.",
+  "actions": ["read_spreadsheet('spreadsheet_id', 'Sheet1!A1:C10')"]
+}
+```
+
+
+
+#### 6. Create a Google Slides Presentation
+
+* Thought: "I am creating a new Google Slides presentation."
+* Actions:
+
+
+```bash
+{
+  "thought": "I am creating a new Google Slides presentation.",
+  "actions": ["create_slide('New Presentation')"]
+}
+```
+
+
+
+#### 7. Update Google Slide Content
+
+* Thought: "I am updating content of the specified slide in the presentation."
+* Actions:
+
+
+```bash
+{
+  "thought": "I am updating content of the specified slide in the presentation.",
+  "actions": ["update_slide('presentation_id', {'title': 'Slide Title', 'body': 'Slide Content'})"]
+}
+```
+
+
+
+Detailed Breakdown of Each Function
+
+
+1. Gmail Functions:
+   * open_gmail(): Opens Gmail.
+   * send_email(recipient, subject, body): Sends an email to the specified recipient.
+   * read_emails(): Reads the latest emails.
+2. Google Drive Functions:
+   * open_drive(): Opens Google Drive.
+   * create_document(doc_name, content): Creates a new document with the specified name and content.
+   * read_document(doc_name): Reads the content of the specified document.
+   * share_document(doc_name, user_email): Shares the specified document with the given email address.
+3. Google Calendar Functions:
+   * open_calendar(): Opens Google Calendar.
+   * create_event(title, date, time, location): Creates a new event with the specified details.
+   * list_events(): Lists upcoming events.
+4. Google Tasks Functions:
+   * add_task(task_title, task_description): Adds a new task with the specified title and description.
+   * complete_task(task_id): Marks the specified task as completed.
+5. Google Sheets Functions:
+   * create_spreadsheet(spreadsheet_name): Creates a new spreadsheet with the given name.
+   * update_spreadsheet(spreadsheet_id, range_name, values): Updates values in the specified range of the given spreadsheet.
+   * read_spreadsheet(spreadsheet_id, range_name): Reads values from the specified range of the given spreadsheet.
+6. Google Slides Functions:
+   * create_slide(presentation_name): Creates a new Slides presentation with the specified name.
+   * update_slide(presentation_id, slide_content): Updates the specified slide within the presentation with the given content.
+
+
+
+Example Use Case Workflow
+
+Let's consider a workflow for creating and updating a Google Spreadsheet:
+
+
+1. User Action: The user enters a task to create a new spreadsheet.
+
+   Example interaction:
+
+```bash
+{
+    "task": "Create a new spreadsheet called 'Project Plan'.",
+    "already_done": "",
+    "workspace_content": "",
+    "prompt_history": "",
+    "current_service_url": "",
+    "service_history": "",
+    "token": "user_oauth_token_here"
+}
+```
+
+
+
+
+2. Flask Server Processing:
+   * The server parses the task and constructs a prompt.
+   * Sends the prompt to Claude API for analysis.
+   * Receives the response including the thought and actions:
+
+
+```bash
+{
+    "thought": "I am creating a new Google Spreadsheet.",
+    "actions": ["create_spreadsheet('Project Plan')"]
+}
+```
+
+
+
+
+3. Executing the Actions:
+   * The server reads the action and creates a new Google Spreadsheet using the user's OAuth token.
+   * Responds back to the extension with the result.
+4. User Check: The user can then receive feedback and view the newly created spreadsheet directly.
+
+
